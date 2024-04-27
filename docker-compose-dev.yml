@@ -1,0 +1,193 @@
+#version: '3'
+
+services:
+
+
+  frontend:
+    image: inxaile/frontend
+    restart: unless-stopped
+    depends_on:
+      - "mysql-node1"
+    container_name: frontend
+    hostname: frontend
+    ports:
+      - '3000:3000'
+    volumes:
+      - /app/node_modules
+      - ./frontend/:/app/
+    environment:
+      HOSTNAME: 'alk-sa-dhost'
+    networks:
+      static-network:
+      
+
+  api:
+    image: inxaile/api
+    restart: unless-stopped
+    depends_on:
+      - "mysql-node1"
+    container_name: api
+    hostname: api
+    ports:
+      - '5555:5000'
+    volumes:
+      - /app/node_modules
+      - ./api/:/app/
+    environment:
+      MYSQL_HOST: haproxy
+      MYSQL_USER: app
+      MYSQL_PORT: '3306'
+      MYSQL_PASSWORD: pass
+      MYSQL_DB: time_db
+    networks:
+      static-network:
+
+
+  haproxy:
+    image: inxaile/haproxy-mysql
+    container_name: haproxy
+    hostname: haproxy
+    restart: unless-stopped
+    depends_on:
+      - "mysql-node1"
+    ports:
+      - 1936:1936
+      - 3316:3306
+      - 3317:3307
+    volumes:
+      - ./haproxy/configs/:/configs/
+    networks:
+      static-network:
+
+
+
+  mysql-node1:
+    image: inxaile/mysql
+    container_name:  mysql-node1
+    hostname:  mysql-node1
+    restart: unless-stopped
+    command: ["mysqld",
+      "--server-id=1",
+      "--gtid-mode=ON",
+      "--enforce-gtid-consistency=ON", 
+      "--log-slave-updates=TRUE",      
+      "--master-info-repository=TABLE",
+      "--relay-log-info-repository=TABLE",
+      "--transaction-write-set-extraction=XXHASH64",
+      "--plugin-load-add=group_replication.so",     
+      "--plugin-load-add=mysql_clone.so",  
+      "--loose-group-replication-group-name=ee9a0506-fa8b-11ee-ab2b-005056984808",
+      "--loose-group-replication-local-address=mysql-node1:33061",
+      "--loose-group-replication-group-seeds=mysql-node1:33061,mysql-node2:33061,mysql-node3:33061",
+      "--loose-group-replication-bootstrap-group=FALSE",      
+      "--loose-group-replication-start-on-boot=FALSE",
+      "--loose-group-replication-single-primary-mode=TRUE"]
+    environment:
+      MYSQL_USER: root
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: time_db
+    volumes:
+      - ./mysql/scripts:/docker-entrypoint-initdb.d
+      - mysql-node1_data:/var/lib/mysql
+    networks:
+      static-network:
+        ipv4_address: 172.20.1.10
+    healthcheck:
+      test: "mysql -uroot -p$$MYSQL_ROOT_PASSWORD sys -e 'DO SLEEP(3); CALL set_as_master'"
+      interval: 10s
+      retries: 1
+
+
+
+  mysql-node2:
+    image: inxaile/mysql
+    container_name:  mysql-node2
+    hostname:  mysql-node2
+    restart: unless-stopped
+    depends_on:
+      - "mysql-node1"
+    command: ["mysqld",
+      "--server-id=2",
+      "--gtid-mode=ON",
+      "--enforce-gtid-consistency=ON", 
+      "--log-slave-updates=TRUE",      
+      "--master-info-repository=TABLE",
+      "--relay-log-info-repository=TABLE",
+      "--transaction-write-set-extraction=XXHASH64",
+      "--plugin-load-add=group_replication.so",     
+      "--plugin-load-add=mysql_clone.so",  
+      "--loose-group-replication-group-name=ee9a0506-fa8b-11ee-ab2b-005056984808",
+      "--loose-group-replication-local-address=mysql-node2:33061",
+      "--loose-group-replication-group-seeds=mysql-node1:33061,mysql-node2:33061,mysql-node3:33061",
+      "--loose-group-replication-bootstrap-group=FALSE",      
+      "--loose-group-replication-start-on-boot=FALSE",
+      "--loose-group-replication-single-primary-mode=TRUE"]
+    environment:
+      MYSQL_USER: root
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: time_db
+    volumes:
+      - ./mysql/scripts:/docker-entrypoint-initdb.d
+      - mysql-node2_data:/var/lib/mysql
+    networks:
+      static-network:
+        ipv4_address: 172.20.1.20
+    healthcheck:
+      test: "mysql -uroot -p$$MYSQL_ROOT_PASSWORD sys -e 'DO SLEEP(5); CALL set_as_slave'"
+      interval: 10s
+      retries: 1
+
+
+
+  mysql-node3:
+    image: inxaile/mysql
+    container_name:  mysql-node3
+    hostname:  mysql-node3
+    restart: unless-stopped
+    depends_on:
+      - "mysql-node1"
+    command: ["mysqld",
+      "--server-id=3",
+      "--gtid-mode=ON",
+      "--enforce-gtid-consistency=ON", 
+      "--log-slave-updates=TRUE",      
+      "--master-info-repository=TABLE",
+      "--relay-log-info-repository=TABLE",
+      "--transaction-write-set-extraction=XXHASH64",
+      "--plugin-load-add=group_replication.so",     
+      "--plugin-load-add=mysql_clone.so",  
+      "--loose-group-replication-group-name=ee9a0506-fa8b-11ee-ab2b-005056984808",
+      "--loose-group-replication-local-address=mysql-node3:33061",
+      "--loose-group-replication-group-seeds=mysql-node1:33061,mysql-node2:33061,mysql-node3:33061",
+      "--loose-group-replication-bootstrap-group=FALSE",      
+      "--loose-group-replication-start-on-boot=FALSE",
+      "--loose-group-replication-single-primary-mode=TRUE"]
+    environment:
+      MYSQL_USER: root
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: time_db
+    volumes:
+      - ./mysql/scripts:/docker-entrypoint-initdb.d
+      - mysql-node3_data:/var/lib/mysql\
+    networks:
+      static-network:
+        ipv4_address: 172.20.1.30
+    healthcheck:
+      test: "mysql -uroot -p$$MYSQL_ROOT_PASSWORD sys -e 'DO SLEEP(5); CALL set_as_slave'"
+      interval: 10s
+      retries: 1
+    
+
+    
+volumes:
+  mysql-node1_data:
+  mysql-node2_data:
+  mysql-node3_data:
+ 
+
+ 
+networks:
+  static-network:
+    ipam:
+      config:
+        - subnet: 172.20.1.0/24

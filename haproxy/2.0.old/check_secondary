@@ -1,0 +1,10 @@
+MYSQL_USER="haproxy"
+MYSQL_PASS="pass"
+MYSQL_HOST=$HAPROXY_SERVER_NAME
+MYSQL_QUERY="SELECT MEMBER_ROLE FROM performance_schema.replication_group_members WHERE @@hostname = MEMBER_HOST;"
+ROLE=$(mysql -u$MYSQL_USER -p$MYSQL_PASS -h$MYSQL_HOST -e "$MYSQL_QUERY" 2>/dev/null | awk 'NR==2 {print}')
+if [ "$ROLE" = "SECONDARY" ]; then
+    exit 0
+else
+    exit 1
+fi
