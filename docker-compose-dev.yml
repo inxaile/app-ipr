@@ -93,9 +93,9 @@ services:
       static-network:
         ipv4_address: 172.20.1.10
     healthcheck:
-      test: "mysql -uroot -p$$MYSQL_ROOT_PASSWORD sys -e 'DO SLEEP(3); CALL set_as_master'"
-      interval: 10s
-      retries: 1
+      test: "mysqladmin ping -u root -p$${MYSQL_ROOT_PASSWORD}"
+      interval: 2s
+      retries: 20
 
 
 
@@ -133,9 +133,9 @@ services:
       static-network:
         ipv4_address: 172.20.1.20
     healthcheck:
-      test: "mysql -uroot -p$$MYSQL_ROOT_PASSWORD sys -e 'DO SLEEP(5); CALL set_as_slave'"
-      interval: 10s
-      retries: 1
+      test: "mysqladmin ping -u root -p$${MYSQL_ROOT_PASSWORD}"
+      interval: 2s
+      retries: 20
 
 
 
@@ -173,10 +173,51 @@ services:
       static-network:
         ipv4_address: 172.20.1.30
     healthcheck:
-      test: "mysql -uroot -p$$MYSQL_ROOT_PASSWORD sys -e 'DO SLEEP(5); CALL set_as_slave'"
-      interval: 10s
-      retries: 1
+      test: "mysqladmin ping -u root -p$${MYSQL_ROOT_PASSWORD}"
+      interval: 2s
+      retries: 20
+
+
+  mysql-setup-master:
+    image: inxaile/mysql
+    container_name:  mysql-setup-master
+    hostname:  mysql-setup-master
+    depends_on:
+      - "mysql-node1"
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+    restart: no
+    entrypoint: ["/bin/bash", "-c", "sleep 20 && mysql -uroot -p$$MYSQL_ROOT_PASSWORD -hmysql-node1 sys -e 'CALL set_as_master'"]
+    networks:
+      static-network:
+
+
+  mysql-setup-slave1:
+    image: inxaile/mysql
+    container_name:  mysql-setup-slave1
+    hostname:  mysql-setup-slave1
+    depends_on:
+      - "mysql-node2"
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+    restart: no
+    entrypoint: ["/bin/bash", "-c", "sleep 25 && mysql -uroot -p$$MYSQL_ROOT_PASSWORD -hmysql-node2 sys -e 'CALL set_as_slave'"]
+    networks:
+      static-network:
     
+    
+  mysql-setup-slave2:
+    image: inxaile/mysql
+    container_name:  mysql-setup-slave2
+    hostname:  mysql-setup-slave2
+    depends_on:
+      - "mysql-node3"
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+    restart: no
+    entrypoint: ["/bin/bash", "-c", "sleep 25 && mysql -uroot -p$$MYSQL_ROOT_PASSWORD -hmysql-node3 sys -e 'CALL set_as_slave'"]
+    networks:
+      static-network:
 
     
 volumes:

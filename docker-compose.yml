@@ -178,7 +178,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: pass
     restart: no
-    entrypoint: ["/bin/bash", "-c", "sleep 15 && mysql -uroot -p$$MYSQL_ROOT_PASSWORD -hmysql-node1 sys -e 'CALL set_as_master'"]
+    entrypoint: ["/bin/bash", "-c", "sleep 20 && mysql -uroot -p$$MYSQL_ROOT_PASSWORD -hmysql-node1 sys -e 'CALL set_as_master'"]
     networks:
       static-network:
 
@@ -192,7 +192,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: pass
     restart: no
-    entrypoint: ["/bin/bash", "-c", "sleep 20 && mysql -uroot -p$$MYSQL_ROOT_PASSWORD -hmysql-node2 sys -e 'CALL set_as_slave'"]
+    entrypoint: ["/bin/bash", "-c", "sleep 25 && mysql -uroot -p$$MYSQL_ROOT_PASSWORD -hmysql-node2 sys -e 'CALL set_as_slave'"]
     networks:
       static-network:
     
@@ -206,7 +206,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: pass
     restart: no
-    entrypoint: ["/bin/bash", "-c", "sleep 20 && mysql -uroot -p$$MYSQL_ROOT_PASSWORD -hmysql-node3 sys -e 'CALL set_as_slave'"]
+    entrypoint: ["/bin/bash", "-c", "sleep 25 && mysql -uroot -p$$MYSQL_ROOT_PASSWORD -hmysql-node3 sys -e 'CALL set_as_slave'"]
     networks:
       static-network:
     
